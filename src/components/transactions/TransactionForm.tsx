@@ -19,12 +19,17 @@ import {
 } from "@/components/ui/select";
 import { 
   expenseCategories,
-  incomeCategories
+  incomeCategories,
+  Transaction
 } from "@/lib/data";
 import { useToast } from "@/components/ui/use-toast";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon, DollarSign } from "lucide-react";
 
-export default function TransactionForm() {
+interface TransactionFormProps {
+  onAddTransaction?: (transaction: Transaction) => void;
+}
+
+export default function TransactionForm({ onAddTransaction }: TransactionFormProps) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [transactionType, setTransactionType] = useState<'income' | 'expense'>('expense');
@@ -47,8 +52,8 @@ export default function TransactionForm() {
       return;
     }
     
-    // In a real app, we would save this transaction
-    const newTransaction = {
+    // Create the new transaction
+    const newTransaction: Transaction = {
       id: Date.now().toString(),
       description,
       amount: parseFloat(amount),
@@ -57,12 +62,18 @@ export default function TransactionForm() {
       type: transactionType,
     };
     
-    console.log('New transaction:', newTransaction);
-    
-    toast({
-      title: "Success!",
-      description: "Transaction added successfully",
-    });
+    // Pass the new transaction to parent component if onAddTransaction is provided
+    if (onAddTransaction) {
+      onAddTransaction(newTransaction);
+    } else {
+      // Legacy behavior for backward compatibility
+      console.log('New transaction:', newTransaction);
+      
+      toast({
+        title: "Success!",
+        description: "Transaction added successfully",
+      });
+    }
     
     // Reset form and close dialog
     setDescription('');
@@ -84,7 +95,10 @@ export default function TransactionForm() {
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add Transaction</DialogTitle>
+          <DialogTitle className="flex items-center">
+            <DollarSign className="mr-2 h-5 w-5 text-primary" />
+            Add Transaction
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 pt-4">
           <div className="space-y-2">
@@ -114,16 +128,20 @@ export default function TransactionForm() {
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="amount">Amount</Label>
-            <Input
-              id="amount"
-              type="number"
-              min="0.01"
-              step="0.01"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="0.00"
-            />
+            <Label htmlFor="amount">Amount (BDT)</Label>
+            <div className="relative">
+              <DollarSign className="absolute left-2 top-2.5 h-5 w-5 text-muted-foreground" />
+              <Input
+                id="amount"
+                type="number"
+                min="0.01"
+                step="0.01"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="0.00"
+                className="pl-9"
+              />
+            </div>
           </div>
           
           <div className="space-y-2">
